@@ -11,8 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .single();
 
   const { data } = await supabase
-    .from("players")
-    .select("name,total_score")
+    .from("leaderboard")
+    .select("*")
     .eq("game_id", game.id)
     .order("total_score", { ascending: false });
 

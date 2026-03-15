@@ -15,8 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { error } = await supabase
     .from("games")
     .update({
-      state: "ended",
-      ended_at: new Date()
+      state: "ended"
     })
     .eq("join_code", code)
     .select()
