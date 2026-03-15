@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { usePlayer } from "@/context/PlayerContext";
  
@@ -34,12 +35,39 @@ const SECTION_LIBRARY = [
 export default function Game() {
   const router = useRouter();
   const { code } = router.query;
+  const resolvedCode = Array.isArray(code) ? code[0] : code;
   const { playerId } = usePlayer();
  
   const goToSection = (sectionId: string) => {
-    if (sectionId !== "hallucination" || !playerId) return;
-    router.push(`/hallucination?code=${code}`);
+    if (sectionId !== "hallucination" || !playerId || !resolvedCode) return;
+    router.push(`/hallucination?code=${resolvedCode}`);
   };
+ 
+  useEffect(() => {
+    if (!resolvedCode) return;
+ 
+    let active = true;
+    const pollState = async () => {
+      try {
+        const res = await fetch(`/api/game/lobby?code=${resolvedCode}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+        if (data.game?.state === "ended") {
+          router.replace(`/leaderboard/${resolvedCode}`);
+        }
+      } catch (error) {
+        console.error("Failed to poll game state", error);
+      }
+    };
+ 
+    pollState();
+    const interval = setInterval(pollState, 2000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [resolvedCode, router]);
  
   return (
     <div
@@ -73,7 +101,7 @@ export default function Game() {
                 textTransform: "uppercase"
               }}
             >
-              Room {code || "—"}
+              Room {resolvedCode || "—"}
             </p>
             <h1 style={{ fontSize: "clamp(32px, 4vw, 48px)", marginTop: 10 }}>
               Select your battlefield

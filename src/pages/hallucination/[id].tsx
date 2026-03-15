@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HALLUCINATION_SCENARIOS } from "../../lib/scenarios";
 import { usePlayer } from "@/context/PlayerContext";
 
@@ -14,17 +14,20 @@ interface Response {
 export default function Scenario() {
   const router = useRouter();
   const { id, code } = router.query;
+  const resolvedCode = Array.isArray(code) ? code[0] : code;
   const { playerId, haloKey } = usePlayer();
  
   const scenario = HALLUCINATION_SCENARIOS.find((s) => s.id === Number(id));
+  const [gameState, setGameState] = useState<string | null>(null);
  
   const [message, setMessage] = useState("");
   const [responses, setResponses] = useState<Response[]>([]);
   const [tries, setTries] = useState(0);
   const maxTries = 2;
+  const isGameEnded = gameState === "ended";
  
   const sendPrompt = async () => {
-    if (tries >= maxTries || !scenario || !haloKey || !playerId) return;
+    if (tries >= maxTries || !scenario || !haloKey || !playerId || isGameEnded) return;
  
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -59,7 +62,7 @@ export default function Scenario() {
       },
       body: JSON.stringify({
         playerId,
-        gameCode: code,
+        gameCode: resolvedCode,
         score: data.score,
         section: "hallucination",
         scenario: scenario.id,
@@ -73,6 +76,33 @@ export default function Scenario() {
     setMessage("");
     setTries((t) => t + 1);
   };
+
+  useEffect(() => {
+    if (!resolvedCode) return;
+
+    let active = true;
+    const pollState = async () => {
+      try {
+        const res = await fetch(`/api/game/lobby?code=${resolvedCode}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+        setGameState(data.game?.state ?? null);
+        if (data.game?.state === "ended") {
+          router.replace(`/leaderboard/${resolvedCode}`);
+        }
+      } catch (error) {
+        console.error("Failed to poll game state", error);
+      }
+    };
+
+    pollState();
+    const interval = setInterval(pollState, 2000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [resolvedCode, router]);
 
   if (!scenario) return null;
 
@@ -183,7 +213,7 @@ export default function Scenario() {
           />
           <button
             onClick={sendPrompt}
-            disabled={!message.trim() || tries >= maxTries}
+            disabled={!message.trim() || tries >= maxTries || isGameEnded}
             style={{
               padding: "14px 20px",
               borderRadius: 20,
@@ -253,7 +283,7 @@ export default function Scenario() {
 
           {tries >= maxTries && (
             <button
-              onClick={() => router.push(`/leaderboard/${code}`)}
+              onClick={() => router.push(`/leaderboard/${resolvedCode}`)}
               style={{
                 marginTop: 10,
                 padding: "12px 20px",
@@ -265,7 +295,7 @@ export default function Scenario() {
                 cursor: "pointer"
               }}
             >
-              View leaderboard
+              Leaderboard
             </button>
           )}
         </section>

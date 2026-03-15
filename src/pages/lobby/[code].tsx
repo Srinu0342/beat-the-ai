@@ -10,25 +10,31 @@ interface Player {
 export default function Lobby() {
   const router = useRouter();
   const { code, player } = router.query;
+  const resolvedCode = Array.isArray(code) ? code[0] : code;
   const { setSession } = usePlayer();
  
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
     const poll = async () => {
-      const res = await fetch(`/api/game/lobby?code=${code}`);
+      if (!resolvedCode) return;
+      const res = await fetch(`/api/game/lobby?code=${resolvedCode}`);
       const data = await res.json();
       setPlayers(data.players);
  
       if (data.game.state === "playing") {
         setSession({ playerId: player as string });
-        router.push(`/game/${code}`);
+        router.push(`/game/${resolvedCode}`);
+      }
+
+      if (data.game.state === "ended") {
+        router.replace(`/leaderboard/${resolvedCode}`);
       }
     };
 
     const interval = setInterval(poll, 2000);
     return () => clearInterval(interval);
-  }, [code, router, player, setSession]);
+  }, [resolvedCode, router, player, setSession]);
 
   return (
     <div
@@ -55,7 +61,7 @@ export default function Lobby() {
         >
           <div>
             <p style={{ textTransform: "uppercase", letterSpacing: 4, fontSize: 13, color: "#94a3b8" }}>
-              Room {code || "—"}
+              Room {resolvedCode || "—"}
             </p>
             <h1 style={{ fontSize: "clamp(32px,5vw,48px)" }}>Waiting for contenders</h1>
           </div>
