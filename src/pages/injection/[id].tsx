@@ -299,7 +299,6 @@ export default function InjectionGame() {
               padding: 18,
               resize: "vertical",
               fontSize: 15,
-              fontFamily: "'Space Mono','monospace'",
             }}
           />
           <button
