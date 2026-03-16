@@ -75,10 +75,19 @@ export default function InjectionGame() {
         secret: secretData.secret,
         guardPrompt: secretData.guardPrompt,
         haloKey,
+        playerId,
+        gameCode: resolvedCode,
+        scenarioId: id,
       }),
     });
 
     const data = await res.json();
+
+    if (!res.ok) {
+      // Handle error
+      alert(data.error || "An error occurred");
+      return;
+    }
 
     const newResponse: Response = {
       prompt: message,

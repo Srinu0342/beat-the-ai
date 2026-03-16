@@ -5,10 +5,15 @@ interface Player {
   id: string;
   name: string;
 }
- 
-interface LeaderboardEntry {
-  name: string;
-  total_score: number;
+
+interface InjectionEntry {
+  player_id: string;
+  players: {
+    name: string;
+  };
+  created_at: string;
+  scenario: number;
+  prompt_text: string;
 }
  
 export default function AdminLobby() {
@@ -17,7 +22,7 @@ export default function AdminLobby() {
   const lobbyCode = typeof code === "string" ? code : undefined;
  
   const [players, setPlayers] = useState<Player[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [injectionLeaderboard, setInjectionLeaderboard] = useState<InjectionEntry[]>([]);
   const [status, setStatus] = useState("lobby");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -39,15 +44,15 @@ export default function AdminLobby() {
  
         if (nextState !== "lobby") {
           try {
-            const leaderboardRes = await fetch(`/api/leaderboard?code=${lobbyCode}`);
-            if (!leaderboardRes.ok) throw new Error("Failed to fetch leaderboard");
-            const leaderboardData = await leaderboardRes.json();
-            setLeaderboard(Array.isArray(leaderboardData) ? leaderboardData : []);
+            const injectionRes = await fetch(`/api/injection/leaderboard?code=${lobbyCode}`);
+            if (!injectionRes.ok) throw new Error("Failed to fetch injection leaderboard");
+            const injectionData = await injectionRes.json();
+            setInjectionLeaderboard(Array.isArray(injectionData) ? injectionData : []);
           } catch (error) {
-            console.error("Leaderboard fetch failed", error);
+            console.error("Injection leaderboard fetch failed", error);
           }
         } else {
-          setLeaderboard([]);
+          setInjectionLeaderboard([]);
         }
       } catch (error) {
         console.error("Lobby fetch failed", error);
@@ -250,8 +255,8 @@ export default function AdminLobby() {
           </div>
 
           <div>
-            <h2 style={{ fontSize: 24, marginBottom: 20 }}>Leaderboard</h2>
-            {leaderboard.length === 0 && status === "playing" && (
+            <h2 style={{ fontSize: 24, marginBottom: 20 }}>Injection Leaderboard</h2>
+            {injectionLeaderboard.length === 0 && status === "playing" && (
               <div
                 style={{
                   padding: 20,
@@ -260,33 +265,38 @@ export default function AdminLobby() {
                   color: "#94a3b8"
                 }}
               >
-                Scores will appear once submissions are judged.
+                Successful injection hacks will appear here.
               </div>
             )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {leaderboard.map((entry, index) => (
+              {injectionLeaderboard.map((entry, index) => (
                 <div
-                  key={`${entry.name}-${index}`}
+                  key={`${entry.player_id}-${index}`}
                   style={{
                     padding: 16,
                     borderRadius: 18,
                     background: "rgba(2,6,23,0.7)",
                     border: "1px solid rgba(148,163,184,0.2)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center"
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ color: "#94a3b8" }}>#{index + 1}</span>
-                    <strong>{entry.name}</strong>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ color: "#94a3b8" }}>#{index + 1}</span>
+                      <strong>{entry.players?.name || entry.player_id}</strong>
+                    </div>
+                    <span style={{ fontWeight: 600, color: "#f472b6" }}>Scenario {entry.scenario}</span>
                   </div>
-                  <span style={{ fontWeight: 600 }}>{entry.total_score}</span>
+                  <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 4 }}>
+                    Prompt:
+                  </div>
+                  <div style={{ fontSize: 14, color: "#e2e8f0", background: "rgba(2,6,23,0.5)", padding: 8, borderRadius: 8, wordBreak: "break-word" }}>
+                    {entry.prompt_text}
+                  </div>
                 </div>
               ))}
 
-              {leaderboard.length === 0 && status === "ended" && (
+              {injectionLeaderboard.length === 0 && status === "ended" && (
                 <div
                   style={{
                     padding: 18,
@@ -295,7 +305,7 @@ export default function AdminLobby() {
                     color: "#94a3b8"
                   }}
                 >
-                  No scores reported.
+                  No successful hacks.
                 </div>
               )}
             </div>

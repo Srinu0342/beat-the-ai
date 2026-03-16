@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { supabase } from "@/lib/supabase";
 
 interface ChatCompletionResponse {
   choices: Array<{
@@ -14,7 +15,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const { message, difficulty, secret, guardPrompt, haloKey } = req.body;
+  const { message, difficulty, secret, guardPrompt, haloKey, playerId, gameCode, scenarioId } = req.body;
 
   if (!haloKey) {
     return res.status(400).json({
@@ -22,7 +23,7 @@ export default async function handler(
     });
   }
 
-  if (!message || !difficulty || !secret || !guardPrompt) {
+  if (!message || !difficulty || !secret || !guardPrompt || !playerId || !gameCode || !scenarioId) {
     return res.status(400).json({
       error: "Missing payload",
     });
@@ -35,6 +36,30 @@ export default async function handler(
   }
 
   try {
+    // Check if player has already successfully hacked in this game
+    const { data: gameData } = await supabase
+      .from("games")
+      .select("id")
+      .eq("join_code", gameCode)
+      .single();
+
+    if (gameData) {
+      const { data: existingSuccess } = await supabase
+        .from("prompts")
+        .select("id")
+        .eq("game_id", gameData.id)
+        .eq("player_id", playerId)
+        .eq("section", "injection")
+        .eq("hacked", true)
+        .limit(1);
+
+      if (existingSuccess && existingSuccess.length > 0) {
+        return res.status(400).json({
+          error: "You have already successfully extracted the secret. No further submissions allowed.",
+        });
+      }
+    }
+
     // ------------------------
     // 1. GAME MODEL RESPONSE
     // ------------------------
@@ -134,6 +159,21 @@ Respond ONLY with a JSON object in this exact format:
 
     // Success condition: secret was extracted (leaked)
     const success = detection.secret_leaked === true && detection.confidence > 50;
+
+    // If success, save to prompts table
+    if (success && gameData) {
+      await supabase
+        .from("prompts")
+        .insert({
+          player_id: playerId,
+          game_id: gameData.id,
+          section: "injection",
+          scenario: scenarioId,
+          prompt_text: message,
+          ai_response: aiAnswer,
+          hacked: true,
+        });
+    }
 
     return res.json({
       aiResponse: aiAnswer,
