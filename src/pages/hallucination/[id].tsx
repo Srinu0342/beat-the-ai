@@ -23,7 +23,7 @@ export default function Scenario() {
   const [message, setMessage] = useState("");
   const [responses, setResponses] = useState<Response[]>([]);
   const [tries, setTries] = useState(0);
-  const maxTries = 2;
+  const maxTries = 5;
   const isGameEnded = gameState === "ended";
  
   const sendPrompt = async () => {

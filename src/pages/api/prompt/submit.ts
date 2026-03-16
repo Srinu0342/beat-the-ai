@@ -56,8 +56,6 @@ export default async function handler(
     return res.status(500).json({ error: "Failed to save prompt data" });
   }
 
-  console.log("Prompt data saved:", promptData);
-
   const { data: scoreData, error: scoreError } = await supabase
      .from("scores")
      .select("*")

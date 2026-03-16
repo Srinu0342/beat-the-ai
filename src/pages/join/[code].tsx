@@ -36,6 +36,7 @@ export default function JoinPage() {
  
     setSession({
       playerId: data.id,
+      playerName: data.name,
       haloKey
     });
  

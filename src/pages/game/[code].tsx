@@ -26,9 +26,9 @@ const SECTION_LIBRARY = [
     title: "Prompt Injection Vault",
     description:
       "Override hidden directives and steal secrets without tripping safeguards.",
-    status: "locked",
+    status: "live",
     accent: "#22d3ee",
-    stats: ["requires tier 2"]
+    stats: ["2 prompts", "AI Judge", "+stealth"]
   }
 ];
  
@@ -39,8 +39,12 @@ export default function Game() {
   const { playerId } = usePlayer();
  
   const goToSection = (sectionId: string) => {
-    if (sectionId !== "hallucination" || !playerId || !resolvedCode) return;
-    router.push(`/hallucination?code=${resolvedCode}`);
+    if ((sectionId !== "hallucination" && sectionId !== "injection") || !playerId || !resolvedCode) return;
+    if (sectionId === "hallucination") {
+      router.push(`/hallucination?code=${resolvedCode}`);
+    } else if (sectionId === "injection") {
+      router.push(`/injection?code=${resolvedCode}`);
+    }
   };
  
   useEffect(() => {
@@ -147,7 +151,7 @@ export default function Game() {
           }}
         >
           {SECTION_LIBRARY.map((section) => {
-            const disabled = section.id !== "hallucination";
+            const disabled = section.id !== "hallucination" && section.id !== "injection";
             return (
               <div
                 key={section.id}

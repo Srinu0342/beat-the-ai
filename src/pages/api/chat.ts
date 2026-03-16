@@ -58,8 +58,6 @@ export default async function handler(
 
     const aiAnswer = aiData.choices?.[0]?.message?.content || "";
 
-    console.log({ aiAnswer, aiData });
-
     // ------------------------
     // 2. JUDGE MODEL
     // ------------------------

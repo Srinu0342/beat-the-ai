@@ -10,8 +10,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq("join_code", code)
     .single();
 
-  console.log("Game found:", game);
-
   if (!game) {
     console.error("Game not found for code:", code);
     return res.status(404).json({ error: "Game not found" });
@@ -25,8 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
     .select()
     .single();
-
-  console.log("Player created:", data);
 
   res.json(data);
 }
