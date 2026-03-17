@@ -78,6 +78,7 @@ export default function InjectionGame() {
         playerId,
         gameCode: resolvedCode,
         scenarioId: id,
+        promptNumber: tries + 1
       }),
     });
 
