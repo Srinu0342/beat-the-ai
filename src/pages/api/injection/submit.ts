@@ -41,24 +41,26 @@ export default async function handler(
       .from("games")
       .select("id")
       .eq("join_code", gameCode)
-      .single();
+      .single()
 
-    if (gameData) {
-      const { data: existingSuccess } = await supabase
-        .from("prompts")
-        .select("id")
-        .eq("game_id", gameData.id)
-        .eq("player_id", playerId)
-        .eq("section", "injection")
-        .eq("hacked", true)
-        .limit(1);
+    // Let the user make multiple calls
 
-      if (existingSuccess && existingSuccess.length > 0) {
-        return res.status(400).json({
-          error: "You have already successfully extracted the secret. No further submissions allowed.",
-        });
-      }
-    }
+    // if (gameData) {
+    //   const { data: existingSuccess } = await supabase
+    //     .from("prompts")
+    //     .select("id")
+    //     .eq("game_id", gameData.id)
+    //     .eq("player_id", playerId)
+    //     .eq("section", "injection")
+    //     .eq("hacked", true)
+    //     .limit(1);
+
+    //   if (existingSuccess && existingSuccess.length > 0) {
+    //     return res.status(400).json({
+    //       error: "You have already successfully extracted the secret. No further submissions allowed.",
+    //     });
+    //   }
+    // }
 
     // ------------------------
     // 1. GAME MODEL RESPONSE

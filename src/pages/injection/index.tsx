@@ -169,7 +169,7 @@ export default function InjectionPage() {
             gap: 22,
           }}
         >
-          {INJECTION_SCENARIOS.slice(0, 1).map((scenario) => (
+          {INJECTION_SCENARIOS.map((scenario) => (
             <div
               key={scenario.id}
               style={{
